@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# Ignore VIM Swap Files
+*.swp
+
+# Ignore Bazel Ptrs
+bazel-*
+

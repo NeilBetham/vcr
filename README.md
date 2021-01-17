@@ -10,3 +10,7 @@ Tape Library File Archiver
 # Reasons for building this
 - Bacula is not suited to my use case
 - No other solutions really exist to archive to a tape drive
+
+# Notes
+Currently I am targeting the IBM TS3310 with this tool as that is the only tape library
+I have access to.

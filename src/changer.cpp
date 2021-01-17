@@ -39,7 +39,8 @@ std::vector<std::string> Changer::list_media() const {
   }
 
   // Allocate some buffers to do the invetory
-  uint64_t status_block_size = sizeof(element_status) * e_info.robots + e_info.slots + e_info.ie_stations + e_info.drives;
+  uint64_t total_inventory_count = e_info.robots + e_info.slots + e_info.ie_stations + e_info.drives;
+  uint64_t status_block_size = sizeof(element_status) * total_inventory_count;
   struct element_status* library_statuses = (struct element_status*)malloc(status_block_size);
   if(library_statuses == NULL) {
     throw VCRException(fmt::format("Failed to allocate memory to inspect library status: {}", strerror(errno)));
@@ -70,7 +71,8 @@ std::vector<std::string> Changer::list_media() const {
   media_ids.reserve(e_info.slots);
   for(uint64_t index = 0; index < e_info.slots; index++) {
     if(!slot_statuses[index].full) { continue; }
-    media_ids.push_back(std::string((char*)(&slot_statuses[index].volume), 36));
+    std::string media_id((char*)slot_statuses[index].volume, 36);
+    media_ids.push_back(std::move(media_id));
   }
 
   return media_ids;

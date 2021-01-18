@@ -42,6 +42,24 @@ int main(int argc, char** argv) {
       spdlog::info("Drive [{}] - Full: {}, Medium ID: '{}', Source Addr: {}", drive.address(), drive.full(), drive.medium_id(), drive.source_address());
 
     }
+
+    spdlog::info("Robots in Library:");
+    for(const auto& robot : mtx.list_robots()) {
+      spdlog::info("Robot [{}]", robot.address());
+
+    }
+
+    spdlog::info("Try moving media into and out of drive");
+    auto media = mtx.list_media();
+    auto drives = mtx.list_drives();
+    spdlog::info("Loading media {} into drive {}", media.front().id(), drives.front().address());
+    mtx.load_media(media.front(), drives.front());
+    spdlog::info("Media loaded");
+    sleep(30);
+    spdlog::info("Unloading media {} from drive {} to slot {}", media.front().id(), drives.front().address(), media.front().address());
+    mtx.unload_media(drives.front(), vcr::Slot(media.front().address(), false, ""));
+    spdlog::info("Media unloaded");
+
   }
 
   return 0;

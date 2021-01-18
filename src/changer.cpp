@@ -169,16 +169,56 @@ std::vector<Drive> Changer::list_drives() const {
   return drives;
 }
 
+std::vector<Robot> Changer::list_robots() const {
+  auto inventory = get_inventory(_device_fd);
+  std::vector<Robot> robots;
+  robots.reserve(inventory.info().robots);
+
+  for(uint64_t index = 0; index < inventory.info().robots; index++) {
+    std::string medium_id;
+    if(inventory.robots()[index].full) {
+      medium_id = compact_string(std::string((char*)inventory.robots()[index].volume, 36));
+    }
+    robots.push_back(Robot(inventory.robots()[index].address));
+  }
+
+  return robots;
+}
+
 bool Changer::load_media(Medium medium, Drive drive) {
-  return false;
+  auto robot_list = list_robots();
+  if(robot_list.size() < 1) {
+    throw DeviceError("No robots available to move medium");
+  }
+  struct move_medium mm;
+  mm.source = medium.address();
+  mm.destination = drive.address();
+  mm.robot = robot_list.front().address();
+  mm.invert = 0;
+
+  if(ioctl(_device_fd, SMCIOC_MOVE_MEDIUM, &mm) == -1) {
+    throw DeviceError(fmt::format("Failed to move medium `{}` to drive {}", medium.id(), drive.address()));
+  }
+
+  return true;
 }
 
 bool Changer::unload_media(Drive drive, Slot slot) {
-  return false;
-}
+  auto robot_list = list_robots();
+  if(robot_list.size() < 1) {
+    throw DeviceError("No robots available to move medium");
+  }
+  struct move_medium mm;
+  mm.source = drive.address();
+  mm.destination = slot.address();
+  mm.robot = robot_list.front().address();
+  mm.invert = 0;
 
-bool Changer::move_media(Slot slot_from, Slot slot_to) {
-  return false;
+  if(ioctl(_device_fd, SMCIOC_MOVE_MEDIUM, &mm) == -1) {
+    throw DeviceError(fmt::format("Failed to move medium `{}` from drive {} to slot {}", drive.medium_id(), drive.address(), slot.address()));
+  }
+
+  return true;
 }
 
 

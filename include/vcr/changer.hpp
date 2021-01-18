@@ -9,6 +9,7 @@
 #include "vcr/drive.hpp"
 #include "vcr/medium.hpp"
 #include "vcr/slot.hpp"
+#include "vcr/robot.hpp"
 
 #pragma once
 
@@ -24,10 +25,10 @@ public:
   std::vector<Medium> list_media() const;
   std::vector<Slot> list_slots() const;
   std::vector<Drive> list_drives() const;
+  std::vector<Robot> list_robots() const;
 
   bool load_media(Medium medium, Drive drive);
   bool unload_media(Drive drive, Slot slot);
-  bool move_media(Slot slot_from, Slot slot_to);
 
 private:
   std::string _device_path;

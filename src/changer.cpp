@@ -15,27 +15,39 @@
 
 
 namespace vcr {
+namespace {
 
 
-Changer::Changer(const std::string& device_path) : _device_path(device_path) {
-  _device_fd = open(_device_path.c_str(), O_SYNC, O_RDWR);
-  if(_device_fd == -1) {
-    throw DeviceError(fmt::format("Error opening changer device `{}`: {}", _device_path, strerror(errno)));
-  }
-}
+class Inventory {
+public:
+  Inventory(struct element_info element_info, struct element_status* element_status_array) :
+    _element_info(element_info), _status_array(element_status_array),
+    _robot_statuses((struct element_status*)_status_array.get()),
+    _slot_statuses(_robot_statuses + _element_info.robots),
+    _ie_statuses(_slot_statuses + _element_info.slots),
+    _drive_statuses(_ie_statuses + _element_info.ie_stations) {}
 
-Changer::~Changer() {
-  if(close(_device_fd) == -1) {
-    spdlog::warn("Failed to close changer device handle `{}`: {}", _device_path, strerror(errno));
-  }
-}
+    const element_info& info() const { return _element_info; };
+    const struct element_status* robots() const { return _robot_statuses; };
+    const struct element_status* slots() const { return _slot_statuses; };
+    const struct element_status* ies() const { return _ie_statuses; };
+    const struct element_status* drives() const { return _drive_statuses; };
 
-std::vector<std::string> Changer::list_media() const {
+private:
+  struct element_info _element_info;
+  ScopeGuard _status_array;
+  struct element_status* _robot_statuses = NULL;
+  struct element_status* _slot_statuses = NULL;
+  struct element_status* _ie_statuses = NULL;
+  struct element_status* _drive_statuses = NULL;
+};
+
+
+Inventory get_inventory(int device_fd) {
   // Get the changer info
   struct element_info e_info;
-  if(ioctl(_device_fd, SMCIOC_ELEMENT_INFO, &e_info) == -1) {
-    spdlog::error("Changer IOCTL failed `{}`: {}", _device_path, strerror(errno));
-    return {};
+  if(ioctl(device_fd, SMCIOC_ELEMENT_INFO, &e_info) == -1) {
+    throw DeviceError(fmt::format("Failed to get library element info: {}", strerror(errno)));
   }
 
   // Allocate some buffers to do the invetory
@@ -46,7 +58,9 @@ std::vector<std::string> Changer::list_media() const {
     throw VCRException(fmt::format("Failed to allocate memory to inspect library status: {}", strerror(errno)));
   }
   memset((void*)library_statuses, 0, status_block_size);
-  ScopeGuard sg((void*)library_statuses);
+
+  // Setup the return inventory object
+  Inventory inv(e_info, library_statuses);
 
   // Setup some other pointers to the individual status array blocks
   struct element_status* robot_statuses = library_statuses;
@@ -62,39 +76,108 @@ std::vector<std::string> Changer::list_media() const {
   library_inventory.drive_status = drive_statuses;
 
   // Get the library inventory
-  if(ioctl(_device_fd, SMCIOC_INVENTORY, &library_inventory) == -1) {
-    throw DeviceError(fmt::format("Failed to get library inventory `{}`: {}", _device_path, strerror(errno)));
+  if(ioctl(device_fd, SMCIOC_INVENTORY, &library_inventory) == -1) {
+    throw DeviceError(fmt::format("Failed to get library inventory: {}", strerror(errno)));
   }
 
-  // Start enumerating the slot info looking for media
-  std::vector<std::string> media_ids;
-  media_ids.reserve(e_info.slots);
-  for(uint64_t index = 0; index < e_info.slots; index++) {
-    if(!slot_statuses[index].full) { continue; }
-    std::string media_id((char*)slot_statuses[index].volume, 36);
-    media_ids.push_back(std::move(media_id));
+  return inv;
+}
+
+
+} // namespace
+
+
+Changer::Changer(const std::string& device_path) : _device_path(device_path) {
+  _device_fd = open(_device_path.c_str(), O_SYNC, O_RDWR);
+  if(_device_fd == -1) {
+    throw DeviceError(fmt::format("Error opening changer device `{}`: {}", _device_path, strerror(errno)));
+  }
+}
+
+Changer::~Changer() {
+  if(close(_device_fd) == -1) {
+    spdlog::warn("Failed to close changer device handle `{}`: {}", _device_path, strerror(errno));
+  }
+}
+
+std::vector<Medium> Changer::list_media() const {
+  auto inventory = get_inventory(_device_fd);
+
+  // Start enumerating the different locations for media
+  std::vector<Medium> media;
+  media.reserve(inventory.info().slots + inventory.info().drives + inventory.info().ie_stations);
+
+  for(uint64_t index = 0; index < inventory.info().slots; index++) {
+    if(!inventory.slots()[index].full) { continue; }
+    std::string medium_id((char*)inventory.slots()[index].volume, 36);
+    media.push_back(Medium(compact_string(medium_id), inventory.slots()[index].address, MediumLocation::slot));
   }
 
-  return media_ids;
+  for(uint64_t index = 0; index < inventory.info().drives; index++) {
+    if(!inventory.drives()[index].full) { continue; }
+    std::string medium_id((char*)inventory.drives()[index].volume, 36);
+    media.push_back(Medium(compact_string(medium_id), inventory.drives()[index].address, MediumLocation::drive));
+  }
+
+  for(uint64_t index = 0; index < inventory.info().drives; index++) {
+    if(!inventory.ies()[index].full) { continue; }
+    std::string medium_id((char*)inventory.ies()[index].volume, 36);
+    media.push_back(Medium(compact_string(medium_id), inventory.ies()[index].address, MediumLocation::ie));
+  }
+
+  return media;
 }
 
-std::vector<std::string> Changer::list_slots() const {
-  return {};
+std::vector<Slot> Changer::list_slots() const {
+  auto inventory = get_inventory(_device_fd);
+  std::vector<Slot> slots;
+  slots.reserve(inventory.info().slots);
+
+  for(uint64_t index = 0; index < inventory.info().slots; index++) {
+    std::string medium_id;
+    if(inventory.slots()[index].full) {
+      medium_id = compact_string(std::string((char*)inventory.slots()[index].volume, 36));
+    }
+    slots.push_back(Slot(
+      inventory.slots()[index].address,
+      inventory.slots()[index].full,
+      medium_id
+    ));
+  }
+
+  return slots;
 }
 
-std::vector<std::string> Changer::list_drives() const {
-  return {};
+std::vector<Drive> Changer::list_drives() const {
+  auto inventory = get_inventory(_device_fd);
+  std::vector<Drive> drives;
+  drives.reserve(inventory.info().drives);
+
+  for(uint64_t index = 0; index < inventory.info().drives; index++) {
+    std::string medium_id;
+    if(inventory.drives()[index].full) {
+      medium_id = compact_string(std::string((char*)inventory.drives()[index].volume, 36));
+    }
+    drives.push_back(Drive(
+      inventory.drives()[index].address,
+      inventory.drives()[index].full,
+      medium_id,
+      inventory.drives()[index].source
+    ));
+  }
+
+  return drives;
 }
 
-bool Changer::load_media(std::string media_id) {
+bool Changer::load_media(Medium medium, Drive drive) {
   return false;
 }
 
-bool Changer::unload_media(std::string drive_id, std::string slot_id) {
+bool Changer::unload_media(Drive drive, Slot slot) {
   return false;
 }
 
-bool Changer::move_media(std::string slot_id_from, std::string slot_id_to) {
+bool Changer::move_media(Slot slot_from, Slot slot_to) {
   return false;
 }
 

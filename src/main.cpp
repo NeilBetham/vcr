@@ -28,8 +28,19 @@ int main(int argc, char** argv) {
   if(changer_device) {
     vcr::Changer mtx(args::get(changer_device));
     spdlog::info("Media In Library:");
-    for(const auto& media_id : mtx.list_media()) {
-      spdlog::info("Tape: {}", media_id);
+    for(const auto& medium : mtx.list_media()) {
+      spdlog::info("Tape: {}", medium.id());
+    }
+
+    spdlog::info("Slots in Library:");
+    for(const auto& slot : mtx.list_slots()) {
+      spdlog::info("Slot [{}] - Full: {}, Medium ID: '{}'", slot.address(), slot.full(), slot.medium_id());
+    }
+
+    spdlog::info("Drives in Library:");
+    for(const auto& drive : mtx.list_drives()) {
+      spdlog::info("Drive [{}] - Full: {}, Medium ID: '{}', Source Addr: {}", drive.address(), drive.full(), drive.medium_id(), drive.source_address());
+
     }
   }
 

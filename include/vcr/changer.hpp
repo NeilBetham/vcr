@@ -2,9 +2,13 @@
  * @brief Media Changer Interface
  */
 
-#include <optional>
+#include <cstdint>
 #include <string>
 #include <vector>
+
+#include "vcr/drive.hpp"
+#include "vcr/medium.hpp"
+#include "vcr/slot.hpp"
 
 #pragma once
 
@@ -17,13 +21,13 @@ public:
   Changer(const std::string& device_path);
   ~Changer();
 
-  std::vector<std::string> list_media() const;
-  std::vector<std::string> list_slots() const;
-  std::vector<std::string> list_drives() const;
+  std::vector<Medium> list_media() const;
+  std::vector<Slot> list_slots() const;
+  std::vector<Drive> list_drives() const;
 
-  bool load_media(std::string media_id);
-  bool unload_media(std::string drive_id, std::string slot_id);
-  bool move_media(std::string slot_id_from, std::string slot_id_to);
+  bool load_media(Medium medium, Drive drive);
+  bool unload_media(Drive drive, Slot slot);
+  bool move_media(Slot slot_from, Slot slot_to);
 
 private:
   std::string _device_path;

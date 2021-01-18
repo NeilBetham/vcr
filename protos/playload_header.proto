@@ -1,0 +1,10 @@
+syntax = "proto3";
+package vcr;
+
+message PayloadHeader {
+  // The payload size
+  uint64 size = 1;
+
+  // Encryption info
+  bool is_encrypted = 2;
+}

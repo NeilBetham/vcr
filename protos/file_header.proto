@@ -1,0 +1,18 @@
+syntax = "proto3";
+package vcr;
+
+message FileHeader {
+  // File metadata
+  string path = 1;
+  uint64 size = 2;
+  uint32 owner = 3;
+  uint32 group = 4;
+  uint32 perms = 5;
+
+  // File integrity
+  bytes shasum_512 = 6;
+
+  // Storage time
+  uint64 seconds_stamp = 4;
+  uint32 nano_stamp = 5;
+}

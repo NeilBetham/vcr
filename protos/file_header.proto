@@ -13,6 +13,6 @@ message FileHeader {
   bytes shasum_512 = 6;
 
   // Storage time
-  uint64 seconds_stamp = 4;
-  uint32 nano_stamp = 5;
+  uint64 seconds_stamp = 7;
+  uint32 nano_stamp = 8;
 }

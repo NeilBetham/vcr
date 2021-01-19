@@ -15,3 +15,43 @@ http_archive(
   sha256 = "dcc6d0d6b941eb40eeeb5741917d557944f3880e0dea9096147d0bdd89c34654",
   build_file = "args.BUILD",
 )
+
+http_archive(
+    name = "rules_foreign_cc",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/d54c78ab86b40770ee19f0949db9d74a831ab9f0.tar.gz",
+    sha256 = "e7446144277c9578141821fc91c55a61df7ae01bda890902f7286f5fd2f6ae46",
+    strip_prefix="rules_foreign_cc-d54c78ab86b40770ee19f0949db9d74a831ab9f0",
+)
+load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()
+
+http_archive(
+  name="libsodium",
+  url="https://github.com/jedisct1/libsodium/archive/89916bbe11cfb2a40f45521c2c7187d042e5023f.tar.gz",
+  sha256="1afcca21f0a8d50d668801e280787cd953f26527adcec89b75d5159cabd9222f",
+  strip_prefix = "libsodium-89916bbe11cfb2a40f45521c2c7187d042e5023f",
+  build_file = "libsodium.BUILD",
+)
+
+# rules_cc defines rules for generating C++ code from Protocol Buffers.
+http_archive(
+    name = "rules_cc",
+    sha256 = "71d037168733f26d2a9648ad066ee8da4a34a13f51d24843a42efa6b65c2420f",
+    strip_prefix = "rules_cc-b1c40e1de81913a3c40e5948f78719c28152486d",
+    url = "https://github.com/bazelbuild/rules_cc/archive/b1c40e1de81913a3c40e5948f78719c28152486d.tar.gz",
+)
+
+# rules_proto defines abstract rules for building Protocol Buffers.
+http_archive(
+    name = "rules_proto",
+    sha256 = "d8992e6eeec276d49f1d4e63cfa05bbed6d4a26cfe6ca63c972827a0d141ea3b",
+    strip_prefix = "rules_proto-cfdc2fa31879c0aebe31ce7702b1a9c8a4be02d2",
+    url = "https://github.com/bazelbuild/rules_proto/archive/cfdc2fa31879c0aebe31ce7702b1a9c8a4be02d2.tar.gz",
+)
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
+rules_cc_dependencies()
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+rules_proto_dependencies()
+rules_proto_toolchains()

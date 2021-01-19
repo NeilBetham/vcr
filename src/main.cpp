@@ -1,5 +1,6 @@
 #include <args.hxx>
 #include <spdlog/spdlog.h>
+#include <sodium.h>
 
 #include "args.hxx"
 #include "vcr/vcr.hpp"
@@ -7,6 +8,9 @@
 using namespace std;
 
 int main(int argc, char** argv) {
+  // This needs to be done before any crypto ops to ensure the lib is in a good state
+  sodium_init();
+
   args::ArgumentParser parser("Tape Library File Archiver", "");
   args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
   args::ValueFlag<std::string> changer_device(parser, "changer-device", "The device file for the media changer", {'m', "mtx"});
@@ -26,7 +30,6 @@ int main(int argc, char** argv) {
   }
 
   if(changer_device) {
-
   }
 
   return 0;

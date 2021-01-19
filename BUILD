@@ -24,6 +24,7 @@ cc_binary(
   linkopts = [
     '-l:libm.a',
     '-l:libstdc++.a',
+    '-pthreads',
   ],
   linkstatic = 1,
 )

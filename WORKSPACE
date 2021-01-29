@@ -12,7 +12,7 @@ http_archive(
 http_archive(
   name = "args",
   urls = ["https://github.com/Taywee/args/archive/6.2.4.tar.gz"],
-  sha256 = "dcc6d0d6b941eb40eeeb5741917d557944f3880e0dea9096147d0bdd89c34654",
+  sha256 = "308eb09a9656315b38c2d1f7526b22b42695b352da316fa4ac17a8b86cdd4663",
   build_file = "args.BUILD",
 )
 

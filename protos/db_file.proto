@@ -1,0 +1,22 @@
+syntax = "proto3";
+package vcr;
+
+import "protos/timestamp.proto";
+
+
+message ArchivedFile {
+  string path = 1;
+  bytes shasum_512 = 2;
+  Timestamp last_mod_time = 3;
+}
+
+message DBFile {
+  // Last archive check time
+  Timestamp last_archive_run = 1;
+
+  // Encryption key - it is assumed the host is secure or else why bother encrypting the backup
+  bytes encryption_key = 2;
+
+  // Archived file list
+  repeated ArchivedFile archvied_files = 3;
+}

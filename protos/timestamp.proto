@@ -1,0 +1,7 @@
+syntax = "proto3";
+package vcr;
+
+message Timestamp {
+  uint64 sec = 1;
+  uint64 nano_sec = 2;
+}

@@ -12,9 +12,10 @@ Tape Library File Archiver
 - Couldn't find another solution which is directly suited to my use case
 
 # Notes
-Currently I am targeting the IBM TS3310 with this tool as that is the only tape library
+ - Currently I am targeting the IBM TS3310 with this tool as that is the only tape library
 I have access to.
-
+ - Program assumes there is one robot and one drive. I plan to fix this later.
+ 
 # Encryption
 In order to facilitate storing files securely at rest they will need to be encrypted.
 When VCR stores a file onto tape it will store a header that contains the file info

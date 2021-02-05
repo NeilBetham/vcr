@@ -16,4 +16,7 @@ class DeviceError : public VCRException { using VCRException::VCRException; };
 // Changer related exceptions
 class ChangerException : public VCRException { using VCRException::VCRException; };
 
+// Drive related execptions
+class DriveDeviceNotOpen : public VCRException { using VCRException::VCRException; };
+
 } // namespace vcr

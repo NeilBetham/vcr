@@ -40,5 +40,14 @@ int main(int argc, char** argv) {
   if(changer_device) {
   }
 
+  if(tape_device) {
+    auto tape_device_path = args::get(tape_device);
+    vcr::TapeDrive td(tape_device_path);
+    if(td.media_present()) {
+      spdlog::info("Medium in Drive");
+      spdlog::info("Medium capacity: {}", td.media_size());
+    }
+  }
+
   return 0;
 }

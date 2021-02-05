@@ -13,9 +13,9 @@ Tape Library File Archiver
 
 # Notes
  - Currently I am targeting the IBM TS3310 with this tool as that is the only tape library
-I have access to.
+I have access to. As such it uses `lin_tape` for better or for worse. I plan to implement a plain SCSI driver eventually.
  - Program assumes there is one robot and one drive. I plan to fix this later.
- 
+
 # Encryption
 In order to facilitate storing files securely at rest they will need to be encrypted.
 When VCR stores a file onto tape it will store a header that contains the file info
